@@ -1,5 +1,7 @@
 # Creative Planning Dimension
 
+Creative Planning Dimension provides builders with a dedicated space to experiment, design, and test their creations before committing resources in their main survival world. Simply craft a Planning Portal block, place it down, and right-click to instantly teleport to your personal creative planning space.
+
 Installation information
 =======
 
