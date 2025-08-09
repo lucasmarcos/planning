@@ -1,13 +1,4 @@
 {
-  "itemGroup.creativeplanningdimension": "Example Mod Tab",
-  "block.creativeplanningdimension.example_block": "Example Block",
-  "item.creativeplanningdimension.example_item": "Example Item",
-
-  "creativeplanningdimension.configuration.title": "Creative Planning Dimension Configs",
-  "creativeplanningdimension.configuration.section.creativeplanningdimension.common.toml": "Creative Planning Dimension Configs",
-  "creativeplanningdimension.configuration.section.creativeplanningdimension.common.toml.title": "Creative Planning Dimension Configs",
-  "creativeplanningdimension.configuration.items": "Item List",
-  "creativeplanningdimension.configuration.logDirtBlock": "Log Dirt Block",
-  "creativeplanningdimension.configuration.magicNumberIntroduction": "Magic Number Text",
-  "creativeplanningdimension.configuration.magicNumber": "Magic Number"
+  "itemGroup.creativeplanningdimension": "Creative Planning Dimension Tab",
+  "block.creativeplanningdimension.planning_portal_block": "Planning Portal Block"
 }

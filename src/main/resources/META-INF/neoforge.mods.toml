@@ -1,0 +1,28 @@
+modLoader="javafml"
+loaderVersion="[1,)"
+issueTrackerURL="https://github.com/NeoForged/NeoForm/issues"
+license="Mojang Mappings License"
+
+[[mods]]
+modId="creativeplanningdimension"
+version="${file.jar.version}"
+displayName="Creative Planning Dimension"
+displayURL="https://neoforged.net/"
+logoFile="creativeplanningdimension.png"
+credits="Created using NeoForged"
+authors="Lucas Marcos"
+description="Creative Planning Dimension provides builders with a dedicated space to experiment, design, and test their creations before committing resources in their main survival world. Simply craft a Planning Portal block, place it down, and right-click to instantly teleport to your personal creative planning space."
+
+[[dependencies.creativeplanningdimension]]
+modId="neoforge"
+mandatory=true
+versionRange="[20.4.210,)"
+ordering="NONE"
+side="BOTH"
+
+[[dependencies.creativeplanningdimension]]
+modId="minecraft"
+mandatory=true
+versionRange="[1.20.4,1.21)"
+ordering="NONE"
+side="BOTH"

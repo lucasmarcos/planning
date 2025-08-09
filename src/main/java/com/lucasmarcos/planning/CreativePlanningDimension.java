@@ -6,6 +6,8 @@ import com.mojang.logging.LogUtils;
 
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
+import net.minecraft.core.particles.ParticleType;
+import net.minecraft.core.particles.SimpleParticleType;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.food.FoodProperties;
 import net.minecraft.world.item.BlockItem;
@@ -14,7 +16,12 @@ import net.minecraft.world.item.CreativeModeTabs;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockBehaviour;
+import net.minecraft.world.level.chunk.ChunkGenerator;
+import net.minecraft.world.level.dimension.DimensionType;
 import net.minecraft.world.level.material.MapColor;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.IEventBus;
@@ -42,25 +49,31 @@ public class CreativePlanningDimension {
     public static final DeferredRegister.Blocks BLOCKS = DeferredRegister.createBlocks(MODID);
     // Create a Deferred Register to hold Items which will all be registered under the "creativeplanningdimension" namespace
     public static final DeferredRegister.Items ITEMS = DeferredRegister.createItems(MODID);
-    // Create a Deferred Register to hold CreativeModeTabs which will all be registered under the "creativeplanningdimension" namespace
-    public static final DeferredRegister<CreativeModeTab> CREATIVE_MODE_TABS = DeferredRegister.create(Registries.CREATIVE_MODE_TAB, MODID);
+    public static final DeferredRegister<DimensionType> DIMENSION_TYPES = DeferredRegister.create(Registries.DIMENSION_TYPE, MODID);
+    public static final ResourceKey<Level> PLANNING_DIMENSION_KEY = ResourceKey.create(Registries.DIMENSION, new ResourceLocation(MODID, "planning_dimension"));
+    public static final DeferredHolder<DimensionType, DimensionType> PLANNING_DIMENSION_TYPE = DIMENSION_TYPES.register("planning_dimension", () -> new DimensionType(0, true, false, false, true, 1, true, false, false, false, 0, 0, 0, false));
+
+    public static final DeferredRegister<Biome> BIOMES = DeferredRegister.create(Registries.BIOME, MODID);
+    public static final DeferredHolder<Biome, Biome> PLANNING_BIOME = BIOMES.register("planning_biome", PlanningBiome::create);
+
+    
+
+    public static final DeferredRegister<ChunkGenerator> CHUNK_GENERATORS = DeferredRegister.create(Registries.CHUNK_GENERATOR, MODID);
+    public static final DeferredHolder<ChunkGenerator, ChunkGenerator> PLANNING_CHUNK_GENERATOR = CHUNK_GENERATORS.register("planning_chunk_generator", () -> new PlanningDimensionChunkGenerator(PLANNING_BIOME));
+
+    public static final DeferredRegister<ParticleType<?>> PARTICLE_TYPES = DeferredRegister.create(Registries.PARTICLE_TYPE, MODID);
+    public static final DeferredHolder<ParticleType<?>, SimpleParticleType> PLANNING_PARTICLE_TYPE = PARTICLE_TYPES.register("planning_particle", () -> new SimpleParticleType(true));
 
     // Creates a new Block with the id "creativeplanningdimension:example_block", combining the namespace and path
-    public static final DeferredBlock<Block> EXAMPLE_BLOCK = BLOCKS.registerSimpleBlock("example_block", BlockBehaviour.Properties.of().mapColor(MapColor.STONE));
-    // Creates a new BlockItem with the id "creativeplanningdimension:example_block", combining the namespace and path
-    public static final DeferredItem<BlockItem> EXAMPLE_BLOCK_ITEM = ITEMS.registerSimpleBlockItem("example_block", EXAMPLE_BLOCK);
+    public static final DeferredBlock<Block> PLANNING_PORTAL_BLOCK = BLOCKS.register("planning_portal_block", () -> new PlanningPortalBlock(BlockBehaviour.Properties.of().mapColor(MapColor.STONE).strength(3.0f)));
+    public static final DeferredItem<BlockItem> PLANNING_PORTAL_BLOCK_ITEM = ITEMS.registerSimpleBlockItem("planning_portal_block", PLANNING_PORTAL_BLOCK);
 
-    // Creates a new food item with the id "creativeplanningdimension:example_id", nutrition 1 and saturation 2
-    public static final DeferredItem<Item> EXAMPLE_ITEM = ITEMS.registerSimpleItem("example_item", new Item.Properties().food(new FoodProperties.Builder()
-            .alwaysEdible().nutrition(1).saturationModifier(2f).build()));
-
-    // Creates a creative tab with the id "creativeplanningdimension:example_tab" for the example item, that is placed after the combat tab
-    public static final DeferredHolder<CreativeModeTab, CreativeModeTab> EXAMPLE_TAB = CREATIVE_MODE_TABS.register("example_tab", () -> CreativeModeTab.builder()
-            .title(Component.translatable("itemGroup.creativeplanningdimension")) //The language key for the title of your CreativeModeTab
+    public static final DeferredHolder<CreativeModeTab, CreativeModeTab> CREATIVE_PLANNING_DIMENSION_TAB = CREATIVE_MODE_TABS.register("creative_planning_dimension_tab", () -> CreativeModeTab.builder()
+            .title(Component.translatable("itemGroup.creativeplanningdimension"))
             .withTabsBefore(CreativeModeTabs.COMBAT)
-            .icon(() -> EXAMPLE_ITEM.get().getDefaultInstance())
+            .icon(() -> PLANNING_PORTAL_BLOCK_ITEM.get().getDefaultInstance())
             .displayItems((parameters, output) -> {
-                output.accept(EXAMPLE_ITEM.get()); // Add the example item to the tab. For your own tabs, this method is preferred over the event
+                output.accept(PLANNING_PORTAL_BLOCK_ITEM.get());
             }).build());
 
     // The constructor for the mod class is the first code that is run when your mod is loaded.
@@ -75,6 +88,14 @@ public class CreativePlanningDimension {
         ITEMS.register(modEventBus);
         // Register the Deferred Register to the mod event bus so tabs get registered
         CREATIVE_MODE_TABS.register(modEventBus);
+        // Register the Deferred Register to the mod event bus so dimension types get registered
+        DIMENSION_TYPES.register(modEventBus);
+        // Register the Deferred Register to the mod event bus so chunk generators get registered
+        CHUNK_GENERATORS.register(modEventBus);
+        // Register the Deferred Register to the mod event bus so biomes get registered
+        BIOMES.register(modEventBus);
+        // Register the Deferred Register to the mod event bus so particle types get registered
+        PARTICLE_TYPES.register(modEventBus);
 
         // Register ourselves for server and other game events we are interested in.
         // Note that this is necessary if and only if we want *this* class (CreativePlanningDimension) to respond directly to events.
@@ -91,20 +112,12 @@ public class CreativePlanningDimension {
     private void commonSetup(FMLCommonSetupEvent event) {
         // Some common setup code
         LOGGER.info("HELLO FROM COMMON SETUP");
-
-        if (Config.LOG_DIRT_BLOCK.getAsBoolean()) {
-            LOGGER.info("DIRT BLOCK >> {}", BuiltInRegistries.BLOCK.getKey(Blocks.DIRT));
-        }
-
-        LOGGER.info("{}{}", Config.MAGIC_NUMBER_INTRODUCTION.get(), Config.MAGIC_NUMBER.getAsInt());
-
-        Config.ITEM_STRINGS.get().forEach((item) -> LOGGER.info("ITEM >> {}", item));
     }
 
-    // Add the example block item to the building blocks tab
+    // Add the planning portal block item to the creative tab
     private void addCreative(BuildCreativeModeTabContentsEvent event) {
         if (event.getTabKey() == CreativeModeTabs.BUILDING_BLOCKS) {
-            event.accept(EXAMPLE_BLOCK_ITEM);
+            event.accept(PLANNING_PORTAL_BLOCK_ITEM);
         }
     }
 
